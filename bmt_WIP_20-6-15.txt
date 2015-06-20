@@ -1,0 +1,79 @@
+setwd("G:/2015/coursera/data_science/practical_machine_learning/project")
+
+## reminder to insert code to download files 
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+## https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+## load required libraries
+## check if all these libraries are actually needed.
+library(caret)  ##NB: loads lattice & ggplot2
+##library(rpart)
+##library(rpart.plot)
+##library(randomForest)
+##library(corrplot)
+
+## load data.
+testBulk <- read.csv("pml-testing.csv")
+trainBulk <- read.csv("pml-training.csv")
+
+dim(trainBulk) ##[1] 19622   160
+dim(testBulk)  ##[1]  20 160
+
+## remove columns not useful for prediction
+removeIndex <- as.integer(c(1:7))
+names(trainBulk[,1:7])
+names(testBulk[,1:7])
+trainBulk <- trainBulk[,-removeIndex]
+testBulk <- testBulk[,-removeIndex]
+dim(trainBulk) ##[1] 19622   153
+dim(testBulk)  ##[1]  20 153
+
+
+## nearZeroVar {caret}
+## nearZeroVar diagnoses predictors that have one unique value (i.e. are zero variance predictors) 
+## or predictors that are have both of the following characteristics: 
+## - they have very few unique values relative to the number of samples 
+## - the ratio of the frequency of the most common value to the frequency of the second most common value is large.
+trainBulk_nzv <- nearZeroVar(trainBulk, saveMetrics=TRUE)
+trainBulk_remaining <- trainBulk_nzv[which(trainBulk_nzv$nzv==FALSE),]
+trainBulk <- subset(trainBulk , select=rownames(trainBulk_remaining))
+dim(trainBulk) ## [1] 19622    94 ##153-94=59 columns removed due to lack of variance.
+
+##clean data - remove columns with NA values.
+NAs <- apply(trainBulk,2,function(x) {sum(is.na(x))}) 
+## apply {base}, Returns a vector or array or list of values obtained by applying a function to margins of an array or matrix.
+## apply(matrix_to_evaluate, 1=over-rows|2=over-columns, function-to-apply)
+##NAs = vector with zero for columns with nil NA values, use NAs to keep these columns only.
+cleanTrain <- trainBulk[,which(NAs == 0)]
+cleanTest <- testBulk[,which(NAs == 0)]
+
+dim(cleanTrain) ##[1] 19622    53
+dim(cleanTest)  ##[1] 20 53
+
+## build data sets for training and cross validation from the cleanTrain data set. (pml-training.csv)
+## NB : testing data set (cleanTest) is from pml-testing.csv
+trainIndex <- createDataPartition(y = cleanTrain$classe, p=0.7,list=FALSE)
+trainSet <- cleanTrain[trainIndex,]
+crossValidationSet <- cleanTrain[-trainIndex,]
+dim(trainSet)           ## [1] 13737    53
+dim(crossValidationSet) ## [1] 5885   53
+
+
+## refer lectures wk2-1 caret package slide 6-7/11 (gml model example)
+modelFit <- train(classe ~ ., data = trainSet, method="glm")
+## error message. this is odd. generalised linear model should work. trainSet should have adequate data.
+dim(trainSet) ##[1] 13737    53
+names(trainSet) ## 
+Something is wrong; all the Accuracy metric values are missing:
+    Accuracy       Kappa    
+ Min.   : NA   Min.   : NA  
+ 1st Qu.: NA   1st Qu.: NA  
+ Median : NA   Median : NA  
+ Mean   :NaN   Mean   :NaN  
+ 3rd Qu.: NA   3rd Qu.: NA  
+ Max.   : NA   Max.   : NA  
+ NA's   :1     NA's   :1    
+ 
+modelFit <- train(trainSet$classe ~.,data = trainSet, method="rf", trControl = mytrControl)
+
+

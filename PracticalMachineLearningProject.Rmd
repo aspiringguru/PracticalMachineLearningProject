@@ -1,0 +1,35 @@
+# Practical Machine Learning Project : Human Activity Recognition from wearable acceleromters.
+### by Matthew Taylor
+### Friday 19th June 2015
+==================================================================================================
+# Introduction
+
+This report documents the Project submitted for the Coursera course "Practical Machine Learning".
+
+The project uses data from http://groupware.les.inf.puc-rio.br/har and Machine Learning to assess human movements.
+
+5 classes (sitting-down, standing-up, standing, walking, and sitting) of movement collected on 8 hours of activities of 4 healthy subjects are assessed.
+
+The project predicts the class of activity using a Machine Learning model trained on the training data provided. 
+
+Predictions of activity class (the Classe variable) are made on the test data provided.
+
+# Data Cleaning
+
+Assessment of the data identified 7 columns with non-accelerometer data. Columns “X”, “user_name”, “raw_timestamp_part_1”, “raw_timestamp_part_2”, “cvtd_timestamp”, “new_window”, “num_window” were excluded.
+
+Assessment of variable variance identified 59 columns with near zero variance. These near zero value columns were excluded from subsequent machine learning.
+
+Columns with NA values were then removed, leaving 53 columns.
+
+
+
+
+
+
+
+
+
+
+
+
