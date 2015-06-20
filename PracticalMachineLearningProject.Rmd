@@ -14,13 +14,61 @@ The project predicts the class of activity using a Machine Learning model traine
 
 Predictions of activity class (the Classe variable) are made on the test data provided.
 
-# Data Cleaning
+# Loading & Data Cleaning
 
 Assessment of the data identified 7 columns with non-accelerometer data. Columns “X”, “user_name”, “raw_timestamp_part_1”, “raw_timestamp_part_2”, “cvtd_timestamp”, “new_window”, “num_window” were excluded.
 
 Assessment of variable variance identified 59 columns with near zero variance. These near zero value columns were excluded from subsequent machine learning.
 
 Columns with NA values were then removed, leaving 53 columns.
+
+```{r}
+setwd("G:/2015/coursera/data_science/practical_machine_learning/project")
+library(caret)  ##NB: loads lattice & ggplot2
+testBulk <- read.csv("pml-testing.csv")
+trainBulk <- read.csv("pml-training.csv")
+removeIndex <- as.integer(c(1:7))
+trainBulk <- trainBulk[,-removeIndex]
+testBulk <- testBulk[,-removeIndex]
+trainBulk_nzv <- nearZeroVar(trainBulk, saveMetrics=TRUE)
+trainBulk_remaining <- trainBulk_nzv[which(trainBulk_nzv$nzv==FALSE),]
+trainBulk <- subset(trainBulk , select=rownames(trainBulk_remaining))
+NAs <- apply(trainBulk,2,function(x) {sum(is.na(x))}) 
+cleanTrain <- trainBulk[,which(NAs == 0)]
+cleanTest <- testBulk[,which(NAs == 0)]
+```
+
+# Procedure
+
+The training data (pml-training.csv) is then split into a training set and validation set. (70%/30%) Testing Data was provided separately (pml-testing.csv).
+
+Random forest method with cross validation is used. The cross validation uses the 30% data previously split off to test the models accuracy.
+
+After testing the accuracy of the model, the test data is loaded, classe values predicted and stored in files using the pml_write_files function.
+
+```{r}
+trainIndex <- createDataPartition(y = cleanTrain$classe, p=0.7,list=FALSE)
+trainSet <- cleanTrain[trainIndex,]
+crossValidationSet <- cleanTrain[-trainIndex,]
+modelFit <- train(classe ~ ., data = trainSet, method="glm")
+mytrControl = trainControl(method = "cv", number = 4)
+modelFit <- train(trainSet$classe ~.,data = trainSet, method="rf", trControl = mytrControl)
+modelFit
+modelFit$finalModel
+predicted <- predict(modelFit, crossValidationSet)
+SampleError <- sum(predicted == crossValidationSet$classe)/nrow(crossValidationSet)
+answers <- predict(modelFit, testBulk)
+answers
+answers <- as.character(answers)
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(answers)
+```
 
 
 

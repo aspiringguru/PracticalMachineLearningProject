@@ -63,7 +63,8 @@ dim(crossValidationSet) ## [1] 5885   53
 modelFit <- train(classe ~ ., data = trainSet, method="glm")
 ## error message. this is odd. generalised linear model should work. trainSet should have adequate data.
 dim(trainSet) ##[1] 13737    53
-names(trainSet) ## 
+names(trainSet) ##
+------------------------------------------------------ 
 Something is wrong; all the Accuracy metric values are missing:
     Accuracy       Kappa    
  Min.   : NA   Min.   : NA  
@@ -73,7 +74,54 @@ Something is wrong; all the Accuracy metric values are missing:
  3rd Qu.: NA   3rd Qu.: NA  
  Max.   : NA   Max.   : NA  
  NA's   :1     NA's   :1    
- 
+warnings()
+Warning messages:
+1: In eval(expr, envir, enclos) :
+  model fit failed for Resample01: parameter=none Error in method$fit(x = x, y = y, wts = wts, param = tuneValue, lev = obsLevels,  : 
+  glm models can only use 2-class outcomes
+  repeated n times
+  glm models can only use 2-class outcomes
+----------------------------------------------------------
+mytrControl = trainControl(method = "cv", number = 4)
 modelFit <- train(trainSet$classe ~.,data = trainSet, method="rf", trControl = mytrControl)
+## this took > 30' to run.
+modelFit
+---------------------------------------------
+Random Forest 
 
+13737 samples
+   52 predictor
+    5 classes: 'A', 'B', 'C', 'D', 'E' 
 
+No pre-processing
+Resampling: Cross-Validated (4 fold) 
+
+Summary of sample sizes: 10304, 10304, 10301, 10302 
+
+Resampling results across tuning parameters:
+
+  mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+   2    0.9910462  0.9886726  0.003009365  0.003806771
+  27    0.9907551  0.9883054  0.002639478  0.003338281
+  52    0.9839855  0.9797392  0.002476140  0.003132799
+
+Accuracy was used to select the optimal model using  the largest value.
+The final value used for the model was mtry = 2. 
+----------------------------------------------
+modelFit$finalModel
+
+Call:
+ randomForest(x = x, y = y, mtry = param$mtry) 
+               Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 2
+
+        OOB estimate of  error rate: 0.6%
+Confusion matrix:
+     A    B    C    D    E  class.error
+A 3903    2    0    0    1 0.0007680492
+B   14 2639    5    0    0 0.0071482318
+C    0   19 2376    1    0 0.0083472454
+D    0    0   34 2216    2 0.0159857904
+E    0    0    0    5 2520 0.0019801980
+-----------------------------------------------------
